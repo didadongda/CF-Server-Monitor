@@ -1,4 +1,4 @@
-import { initDatabase } from './database/schema.js';
+import { initDatabase, cleanupOldData } from './database/schema.js';
 import { handleAdminAPI } from './handlers/admin.js';
 import { handleAdminUI } from './handlers/admin-ui.js';
 import { handleUpdate } from './handlers/update.js';
@@ -97,5 +97,18 @@ export default {
     }
 
     return new Response('Not Found', { status: 404 });
+  },
+
+  // 定时任务处理器
+  async scheduled(event, env, ctx) {
+    // 数据库初始化
+    if (!dbInitialized) {
+      await initDatabase(env.DB);
+      dbInitialized = true;
+    }
+    
+    console.log('[Cron] 开始执行定时清理任务');
+    await cleanupOldData(env.DB);
+    console.log('[Cron] 定时清理任务完成');
   }
 };
